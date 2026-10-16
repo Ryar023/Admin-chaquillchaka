@@ -1,0 +1,16 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "bundler",
+    "useDefineForClassFields": false,
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true
+  },
+  "angularCompilerOptions": { "strictInjectionParameters": true, "strictTemplates": true }
+}

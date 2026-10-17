@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { AdminHeaderComponent } from '../admin-header.component';
+import { ConfirmDialogComponent } from '../confirm-dialog.component';
 import { API_URL, AdminRole, AdminUser, AuthService } from '../auth.service';
 
 interface ManagedUser extends AdminUser { isActive: boolean; createdAt: string; }
@@ -10,18 +12,10 @@ interface UserResponse { data: ManagedUser[]; }
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, AdminHeaderComponent, ConfirmDialogComponent],
   template: `
     <main>
-      <header class="topbar">
-        <div class="shell topbar-content">
-          <strong>Administración de cuentas</strong>
-          <nav aria-label="Administración">
-            <a *ngIf="auth.hasRole(['ADMIN'])" routerLink="/dashboard">Reservas</a>
-            <button class="button secondary" type="button" (click)="logout()">Cerrar sesión</button>
-          </nav>
-        </div>
-      </header>
+      <app-admin-header />
       <section class="shell page">
         <h1>Usuarios y roles</h1>
         <p>Asigna solo los permisos necesarios para las funciones de cada persona.</p>
@@ -65,12 +59,16 @@ interface UserResponse { data: ManagedUser[]; }
                 <tr *ngFor="let user of users">
                   <td>{{ user.name }}</td><td>{{ user.email }}</td>
                   <td>
-                    <select class="control" [ngModel]="user.role" (ngModelChange)="changeRole(user, $event)" [disabled]="user.id === currentUserId" [attr.aria-label]="'Rol de ' + user.name">
+                    <select class="control" [ngModel]="roleDraft[user.id] ?? user.role" (ngModelChange)="roleDraft[user.id] = $event" [disabled]="user.id === currentUserId" [attr.aria-label]="'Rol de ' + user.name">
                       <option *ngFor="let role of availableRoles" [value]="role">{{ roleLabel(role) }}</option>
                     </select>
+                    <div class="row-actions" *ngIf="hasRoleDraft(user)" aria-live="polite">
+                      <button class="button" type="button" (click)="askRoleChange(user)">Confirmar cambio</button>
+                      <button class="button secondary" type="button" (click)="discardRole(user)">Descartar</button>
+                    </div>
                   </td>
                   <td>{{ user.isActive ? 'Activa' : 'Desactivada' }}</td>
-                  <td><button class="button" type="button" (click)="toggleActive(user)" [disabled]="user.id === currentUserId" [attr.aria-label]="(user.isActive ? 'Desactivar' : 'Activar') + ' cuenta de ' + user.name">{{ user.isActive ? 'Desactivar' : 'Activar' }}</button></td>
+                  <td><button class="button" type="button" (click)="askToggle(user)" [disabled]="user.id === currentUserId" [attr.aria-label]="(user.isActive ? 'Desactivar' : 'Activar') + ' cuenta de ' + user.name">{{ user.isActive ? 'Desactivar' : 'Activar' }}</button></td>
                 </tr>
                 <tr *ngIf="!users.length"><td colspan="5">No hay cuentas para mostrar.</td></tr>
               </tbody>
@@ -78,6 +76,7 @@ interface UserResponse { data: ManagedUser[]; }
           </div>
         </section>
       </section>
+      <app-confirm-dialog *ngIf="pending" [title]="pending.title" [message]="pending.message" confirmLabel="Sí, confirmar" (confirmed)="runPending()" (cancelled)="pending = null" />
     </main>
   `,
   styles: [`
@@ -91,7 +90,8 @@ interface UserResponse { data: ManagedUser[]; }
     label { margin-top:8px; font-weight:700; }
     .role-help,small { color:#4c5b52; line-height:1.5; }
     .button { min-height:44px; }
-    .secondary { border:1px solid #fff; background:transparent; }
+    .secondary { border:2px solid #183b32; background:#fff; color:#183b32; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
     .notice { border-radius:6px; padding:12px; }
     .notice.error,.error { color:#98261d; background:#fff0ed; }
     .notice.success { color:#155b39; background:#eaf6ed; }
@@ -153,12 +153,34 @@ export class UsersComponent {
     });
   }
 
-  changeRole(user: ManagedUser, role: AdminRole): void {
-    this.updateUser(user, { role }, 'Rol actualizado.');
+  roleDraft: Partial<Record<string, AdminRole>> = {};
+  pending: { title: string; message: string; run: () => void } | null = null;
+
+  hasRoleDraft(user: ManagedUser): boolean { return !!this.roleDraft[user.id] && this.roleDraft[user.id] !== user.role; }
+  discardRole(user: ManagedUser): void { delete this.roleDraft[user.id]; }
+
+  askRoleChange(user: ManagedUser): void {
+    const role = this.roleDraft[user.id]!;
+    this.pending = {
+      title: '¿Deseas confirmar este cambio de rol?',
+      message: `${user.name} pasará de ${this.roleLabel(user.role)} a ${this.roleLabel(role)}.`,
+      run: () => { this.updateUser(user, { role }, 'Rol actualizado.'); delete this.roleDraft[user.id]; }
+    };
   }
 
-  toggleActive(user: ManagedUser): void {
-    this.updateUser(user, { isActive: !user.isActive }, `Cuenta ${user.isActive ? 'desactivada' : 'activada'}.`);
+  askToggle(user: ManagedUser): void {
+    const action = user.isActive ? 'desactivar' : 'activar';
+    this.pending = {
+      title: `¿Deseas ${action} esta cuenta?`,
+      message: `Se va a ${action} la cuenta de ${user.name} (${user.email}).`,
+      run: () => this.updateUser(user, { isActive: !user.isActive }, `Cuenta ${user.isActive ? 'desactivada' : 'activada'}.`)
+    };
+  }
+
+  runPending(): void {
+    const action = this.pending;
+    this.pending = null;
+    action?.run();
   }
 
   roleLabel(role: AdminRole): string {

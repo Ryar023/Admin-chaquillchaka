@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { API_URL, AuthService } from '../auth.service';
+import { AdminHeaderComponent } from '../admin-header.component';
+import { ConfirmDialogComponent } from '../confirm-dialog.component';
 
 type Status = 'pending' | 'confirmed' | 'cancelled';
 interface Billing { documentType: 'boleta' | 'factura'; ruc?: string; businessName?: string; fiscalAddress?: string; }
@@ -23,18 +25,9 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, AdminHeaderComponent, ConfirmDialogComponent],
   template: `
-  <header class="topbar">
-    <div class="shell topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">C</span><div><strong>Chaquill Chak'a</strong><small>Panel de reservas</small></div></div>
-      <nav aria-label="Administración" class="topnav">
-        <span class="who" *ngIf="auth.user() as u"><strong>{{ u.name }}</strong><small>{{ roleLabel(u.role) }}</small></span>
-        <a *ngIf="auth.hasRole(['ADMIN','HR'])" routerLink="/users" class="nav-link">Usuarios</a>
-        <button class="button ghost" type="button" (click)="logout()">Cerrar sesión</button>
-      </nav>
-    </div>
-  </header>
+  <app-admin-header />
 
   <main class="shell page">
     <div class="page-head">
@@ -80,7 +73,13 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
               <td>{{ paymentLabel(booking.paymentMethod) }} · {{ booking.paymentCurrency }}<strong class="amount">{{ booking.paymentCurrency === 'USD' ? ('$ ' + (booking.totalUsd | number:'1.2-2')) : ('S/ ' + (booking.totalPen | number:'1.2-2')) }}</strong></td>
               <td>
                 <span class="badge" [ngClass]="'st-' + booking.status">{{ statusLabel(booking.status) }}</span>
-                <select *ngIf="auth.hasRole(['ADMIN','RECEPTION'])" class="control status-select" [ngModel]="booking.status" (ngModelChange)="updateStatus(booking, $event)" [attr.aria-label]="'Cambiar estado de la reserva de ' + (booking.customer?.name ?? booking._id)"><option value="pending">Pendiente</option><option value="confirmed">Confirmado vía Yape/Plin</option><option value="cancelled">Cancelado</option></select>
+                <ng-container *ngIf="auth.hasRole(['ADMIN','RECEPTION'])">
+                  <select class="control status-select" [ngModel]="draft[booking._id] ?? booking.status" (ngModelChange)="draft[booking._id] = $event" [attr.aria-label]="'Cambiar estado de la reserva de ' + (booking.customer?.name ?? booking._id)"><option value="pending">Pendiente</option><option value="confirmed">Confirmado vía Yape/Plin</option><option value="cancelled">Cancelado</option></select>
+                  <div class="row-actions" *ngIf="hasDraft(booking)" aria-live="polite">
+                    <button class="button" type="button" (click)="askConfirm(booking)">Confirmar cambio</button>
+                    <button class="button ghost-dark" type="button" (click)="discard(booking)">Descartar</button>
+                  </div>
+                </ng-container>
               </td>
             </tr>
           </tbody>
@@ -88,7 +87,11 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
       </div>
       <p *ngIf="!loading && !visibleBookings.length" class="empty">No hay reservas con estos filtros.</p>
     </section>
-  </main>`,
+  </main>
+  <app-confirm-dialog *ngIf="pending" title="¿Deseas confirmar este cambio?"
+    [message]="'La reserva de ' + (pending.booking.customer?.name ?? 'este cliente') + ' pasará de «' + statusLabel(pending.booking.status) + '» a «' + statusLabel(pending.status) + '».'"
+    confirmLabel="Sí, confirmar" (confirmed)="applyPending()" (cancelled)="pending = null" />
+  <p *ngIf="success" class="toast" role="status" aria-live="polite">{{ success }}</p>`,
   styles: [`
     .topbar{background:#183b32;color:#fff}.topbar-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:12px}.brand strong{display:block}.brand small{display:block;color:#cfe3d9}
@@ -111,7 +114,8 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
     tbody tr:hover{background:#f7faf7}td small{display:block;color:#46544d;font-size:13px;margin-top:2px}.amount{display:block;margin-top:4px;color:#183b32;font-size:17px}
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700;background:#e5e7eb;color:#1f2937;margin-bottom:6px}
     .badge-invoice{background:#dbeafe;color:#1e3a8a}.st-pending{background:#fef3c7;color:#78350f}.st-confirmed{background:#dcfce7;color:#14532d}.st-cancelled{background:#fee2e2;color:#7f1d1d}
-    .status-select{margin-top:4px;min-width:200px}.empty{padding:28px;text-align:center;color:#46544d;margin:0}
+    .status-select{margin-top:4px;min-width:200px}.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .toast{position:fixed;right:16px;bottom:16px;margin:0;background:#14532d;color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}.empty{padding:28px;text-align:center;color:#46544d;margin:0}
     .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
   `]
 })
@@ -124,6 +128,9 @@ export class DashboardComponent {
   loading = false;
   error = '';
   documentFilter = '';
+  draft: Partial<Record<string, Status>> = {};
+  pending: { booking: Booking; status: Status } | null = null;
+  success = '';
   filters = { status: '', from: '', to: '', room: '' };
 
   ngOnInit(): void {
@@ -165,9 +172,24 @@ export class DashboardComponent {
 
   updateStatus(booking: Booking, status: Status): void {
     this.http.put<{ data: Booking }>(`${API_URL}/admin/bookings/${booking._id}/status`, { status }).subscribe({
-      next: ({ data }) => booking.status = data.status,
+      next: ({ data }) => {
+        booking.status = data.status;
+        delete this.draft[booking._id];
+        this.success = 'Cambio guardado correctamente.';
+        setTimeout(() => this.success = '', 4000);
+      },
       error: (e) => { this.error = e.error?.message ?? 'No se pudo actualizar el estado.'; }
     });
+  }
+
+  hasDraft(booking: Booking): boolean { return !!this.draft[booking._id] && this.draft[booking._id] !== booking.status; }
+  discard(booking: Booking): void { delete this.draft[booking._id]; }
+  askConfirm(booking: Booking): void { this.pending = { booking, status: this.draft[booking._id]! }; }
+  applyPending(): void {
+    if (!this.pending) return;
+    const { booking, status } = this.pending;
+    this.pending = null;
+    this.updateStatus(booking, status);
   }
 
   logout(): void { this.auth.logout(); this.router.navigateByUrl('/login'); }

@@ -7,7 +7,7 @@ import { AuthService } from '../auth.service';
 @Component({
   standalone: true, imports: [CommonModule, ReactiveFormsModule],
   template: `<main class="shell" style="max-width:520px;padding-top:12vh"><section class="card" aria-labelledby="login-title">
-    <p>Chaquill Chak'a Hostal</p><h1 id="login-title">Acceso de recepción</h1>
+    <img src="/assets/chaquillchaka-logo.png" alt="Chaquill Chak'a Hostal, desde 2008" width="180" height="67" style="display:block;margin:0 auto 12px;max-width:100%;height:auto"><h1 id="login-title">Acceso de recepción</h1>
     <p>Ingresa con la cuenta que te asignó el administrador.</p>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <label for="email">Correo administrativo</label><input id="email" class="control" type="email" formControlName="email" placeholder="admin@chaquillchaka.com.pe" autocomplete="username" aria-required="true" aria-describedby="email-help">

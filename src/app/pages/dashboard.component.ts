@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { API_URL, AuthService } from '../auth.service';
 import { AdminHeaderComponent } from '../admin-header.component';
 import { ConfirmDialogComponent } from '../confirm-dialog.component';
+import { ExportRow, exportToExcel, exportToPdf } from '../export.util';
 
 type Status = 'pending' | 'confirmed' | 'cancelled';
 interface Billing { documentType: 'boleta' | 'factura'; ruc?: string; businessName?: string; fiscalAddress?: string; }
@@ -32,7 +33,11 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
   <main class="shell page">
     <div class="page-head">
       <div><h1>Reservas</h1><p class="lead">Gestiona el estado de pago y el comprobante de cada reserva.</p></div>
-      <button class="button" type="button" (click)="load()" [disabled]="loading">{{ loading ? 'Actualizando…' : 'Actualizar' }}</button>
+      <div class="head-actions">
+        <button class="button ghost-dark" type="button" (click)="exportExcel()" [disabled]="!visibleBookings.length">Exportar Excel</button>
+        <button class="button ghost-dark" type="button" (click)="exportPdf()" [disabled]="!visibleBookings.length">Exportar PDF</button>
+        <button class="button" type="button" (click)="load()" [disabled]="loading">{{ loading ? 'Actualizando…' : 'Actualizar' }}</button>
+      </div>
     </div>
 
     <section class="stats" aria-label="Resumen de reservas" aria-live="polite">
@@ -114,6 +119,7 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
     tbody tr:hover{background:#f7faf7}td small{display:block;color:#46544d;font-size:13px;margin-top:2px}.amount{display:block;margin-top:4px;color:#183b32;font-size:17px}
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700;background:#e5e7eb;color:#1f2937;margin-bottom:6px}
     .badge-invoice{background:#dbeafe;color:#1e3a8a}.st-pending{background:#fef3c7;color:#78350f}.st-confirmed{background:#dcfce7;color:#14532d}.st-cancelled{background:#fee2e2;color:#7f1d1d}
+    .head-actions{display:flex;gap:10px;flex-wrap:wrap}
     .status-select{margin-top:4px;min-width:200px}.row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .toast{position:fixed;right:16px;bottom:16px;margin:0;background:#14532d;color:#fff;padding:12px 18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}.empty{padding:28px;text-align:center;color:#46544d;margin:0}
     .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
@@ -190,6 +196,51 @@ export class DashboardComponent {
     const { booking, status } = this.pending;
     this.pending = null;
     this.updateStatus(booking, status);
+  }
+
+  private exportRows(): ExportRow[] {
+    const date = (value: string): string => new Date(value).toLocaleDateString('es-PE', { timeZone: 'UTC' });
+    return this.visibleBookings.map((b) => ({
+      cliente: b.customer?.name ?? 'Datos protegidos',
+      telefono: b.customer?.phone ?? '',
+      correo: b.customer?.email ?? '',
+      habitacion: b.room.name,
+      llegada: date(b.checkIn),
+      salida: date(b.checkOut),
+      noches: String(b.nights ?? ''),
+      comprobante: this.isInvoice(b) ? 'Factura' : 'Boleta',
+      ruc: b.billing?.ruc ?? '',
+      razonSocial: b.billing?.businessName ?? '',
+      medioPago: this.paymentLabel(b.paymentMethod),
+      moneda: b.paymentCurrency,
+      total: (b.paymentCurrency === 'USD' ? b.totalUsd : b.totalPen).toFixed(2),
+      estado: this.statusLabel(b.status)
+    }));
+  }
+
+  private exportName(): string {
+    const range = [this.filters.from, this.filters.to].filter(Boolean).join('_a_');
+    return `reservas-chaquillchaka${range ? '-' + range : ''}`;
+  }
+
+  async exportExcel(): Promise<void> {
+    try {
+      await exportToExcel(this.exportRows(), this.exportName());
+      this.notify('Archivo Excel generado.');
+    } catch {
+      this.error = 'No se pudo generar el archivo Excel.';
+    }
+  }
+
+  exportPdf(): void {
+    const range = this.filters.from || this.filters.to ? `Fechas: ${this.filters.from || '…'} a ${this.filters.to || '…'}` : 'Todas las fechas';
+    const ok = exportToPdf(this.exportRows(), "Reservas · Chaquill Chak'a Hostal", `${range} · ${this.visibleBookings.length} reservas`);
+    if (!ok) this.error = 'Tu navegador bloqueó la ventana del PDF. Permite las ventanas emergentes e inténtalo de nuevo.';
+  }
+
+  private notify(message: string): void {
+    this.success = message;
+    setTimeout(() => this.success = '', 4000);
   }
 
   logout(): void { this.auth.logout(); this.router.navigateByUrl('/login'); }

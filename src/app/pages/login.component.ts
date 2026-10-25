@@ -24,7 +24,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder); private readonly auth = inject(AuthService); private readonly router = inject(Router);
   readonly form = this.fb.nonNullable.group({ email: ['', [Validators.required, Validators.email, Validators.pattern(/^[^@\s]+@chaquillchaka\.com\.pe$/i)]], password: ['', [Validators.required, Validators.minLength(8)]] });
   loading = false; error = '';
-  submit(): void { this.form.markAllAsTouched(); if (this.form.invalid) return; this.loading = true; this.error = '';
+  submit(): void { this.form.markAllAsTouched(); if (this.form.invalid) { (this.form.controls.email.invalid ? document.getElementById('email') : document.getElementById('password'))?.focus(); return; } this.loading = true; this.error = '';
     this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({ next: ({ user }) => this.router.navigateByUrl(user.role === 'HR' ? '/users' : '/dashboard'), error: (e) => { this.error = e.error?.message ?? 'No fue posible iniciar sesión.'; this.loading = false; } });
   }
 }

@@ -62,7 +62,7 @@ const STATUS_LABELS: Record<Status, string> = { pending: 'Pendiente', confirmed:
     <p *ngIf="loading" role="status" aria-live="polite" class="muted">Cargando reservas… la primera carga puede tardar hasta un minuto.</p>
 
     <section class="card table-card">
-      <div class="table-wrap">
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de reservas con desplazamiento horizontal">
         <table>
           <caption class="sr-only">Reservas registradas</caption>
           <thead><tr><th scope="col">Cliente</th><th scope="col">Habitación</th><th scope="col">Fechas</th><th scope="col">Comprobante</th><th scope="col">Pago y total</th><th scope="col">Estado</th></tr></thead>

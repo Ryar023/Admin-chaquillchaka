@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = { ADMIN: 'Administrador', RECEPTION:
     .sections{display:flex;gap:10px;flex-wrap:wrap}.session{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
     .nav-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 18px;border:2px solid rgba(255,255,255,.55);border-radius:8px;background:transparent;color:#fff;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}
     .nav-btn:hover{background:rgba(255,255,255,.14)}.nav-btn.active{background:#fff;color:#183b32;border-color:#fff}.logout{border-color:#fff}
-    .who{display:flex;flex-direction:column;text-align:right;font-size:14px}.who small{color:#cfe3d9}
+    .who{display:flex;flex-direction:column;text-align:right;font-size:14px}.who small{font-size:12px;color:#cfe3d9}
   `]
 })
 export class AdminHeaderComponent {

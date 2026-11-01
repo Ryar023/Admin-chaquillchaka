@@ -51,7 +51,7 @@ interface UserResponse { data: ManagedUser[]; }
         <section class="card users-card" aria-labelledby="users-title">
           <h2 id="users-title">Cuentas registradas</h2>
           <p *ngIf="loading" role="status" aria-live="polite">Cargando cuentas…</p>
-          <div class="table-wrap" *ngIf="!loading">
+          <div class="table-wrap" *ngIf="!loading" tabindex="0" role="region" aria-label="Tabla de usuarios con desplazamiento horizontal">
             <table>
               <caption class="sr-only">Usuarios y roles del panel administrativo</caption>
               <thead><tr><th scope="col">Nombre</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acción</th></tr></thead>

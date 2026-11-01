@@ -8,7 +8,9 @@ import { filter, skip } from 'rxjs';
   standalone: true,
   imports: [RouterOutlet],
   template: `
-    <a class="skip-link" href="#" (click)="skipToMain($event)">Saltar al contenido principal</a>
+    <nav aria-label="Enlaces de salto">
+      <a class="skip-link" href="#" (click)="skipToMain($event)">Saltar al contenido principal</a>
+    </nav>
     <div class="sr-only" role="status" aria-live="polite">{{ routeAnnouncement }}</div>
     <router-outlet></router-outlet>`
 })

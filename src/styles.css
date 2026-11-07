@@ -13,4 +13,23 @@ button, input, select { font: inherit; }
 .skip-link:focus { top: 8px; }
 main:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+html.a11y-reduced-motion, html.a11y-reduced-motion *, html.a11y-reduced-motion *::before, html.a11y-reduced-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+html.a11y-text-scale-115 body { zoom:1.15; }
+html.a11y-text-scale-130 body { zoom:1.3; }
+html.a11y-text-scale-115 .accessibility-tools { zoom:.869565; }
+html.a11y-text-scale-130 .accessibility-tools { zoom:.769231; }
+html.a11y-high-contrast :is(h1,h2,h3,h4,h5,h6,p,span,label,legend,dt,dd,th,td,a,button,input,select,textarea,li,small,strong) { color:#000 !important; background-color:#fff !important; text-shadow:none !important; }
+html.a11y-high-contrast :is(button,input,select,textarea) { border:2px solid #000 !important; }
+.accessibility-tools { position:fixed; top:88px; right:16px; z-index:49; }
+.accessibility-trigger,.accessibility-panel button { min-height:44px; border:2px solid #183b32; border-radius:6px; background:#fff; padding:9px 13px; color:#183b32; font:inherit; font-weight:700; cursor:pointer; }
+.accessibility-panel { display:grid; gap:12px; width:min(340px,calc(100vw - 32px)); max-height:calc(100vh - 150px); overflow:auto; margin-top:8px; border:2px solid #183b32; border-radius:8px; background:#fff; padding:16px; color:#17221f; box-shadow:0 8px 30px #0003; }
+.accessibility-panel[hidden] { display:none; }
+.accessibility-panel h2 { margin:0; font-size:1.15rem; }
+.accessibility-panel p { margin:0; font-size:.9rem; line-height:1.5; }
+.text-size-control { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.text-size-buttons { display:flex; gap:8px; }
+.accessibility-panel button:disabled { opacity:.55; cursor:not-allowed; }
+.accessibility-panel .accessibility-option,.accessibility-panel .accessibility-reset { width:100%; text-align:left; }
+.accessibility-panel .accessibility-option[aria-pressed="true"] { background:#183b32; color:#fff; }
+.accessibility-panel .accessibility-reset { border-color:#59635d; color:#17221f; }
 .error { color: #9d281c; } .status { padding: 12px; border-radius: 6px; background: #fff3d6; }

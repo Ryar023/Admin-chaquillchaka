@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { filter, skip } from 'rxjs';
+import { AccessibilitySpeechComponent } from './accessibility-speech.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, AccessibilitySpeechComponent],
   template: `
     <nav aria-label="Enlaces de salto">
       <a class="skip-link" href="#" (click)="skipToMain($event)">Saltar al contenido principal</a>
@@ -20,7 +21,8 @@ import { filter, skip } from 'rxjs';
         aria-controls="accessibility-panel"
         [attr.aria-expanded]="accessibilityOpen"
         (click)="accessibilityOpen = !accessibilityOpen">
-        Accesibilidad
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"></circle><path d="M4 8l8 2 8-2M12 10v5m-4 6 4-6 4 6"></path></svg>
+        <span>Accesibilidad</span>
       </button>
       <section [hidden]="!accessibilityOpen" id="accessibility-panel" class="accessibility-panel" aria-labelledby="accessibility-title">
         <h2 id="accessibility-title">Opciones de accesibilidad</h2>
@@ -37,15 +39,21 @@ import { filter, skip } from 'rxjs';
         <button class="accessibility-option" type="button" [attr.aria-pressed]="reducedMotion" (click)="toggleReducedMotion()">
           Reducir movimiento: {{ reducedMotion ? 'activado' : 'desactivado' }}
         </button>
+        <button class="accessibility-option" type="button" [attr.aria-pressed]="distinguishStates" (click)="toggleDistinguishStates()">
+          Distinguir enlaces y estados: {{ distinguishStates ? 'activado' : 'desactivado' }}
+        </button>
+        <p>Ayuda a distinguir enlaces y estados sin depender solo del color; puede ser útil para personas con daltonismo.</p>
+        <app-accessibility-speech></app-accessibility-speech>
         <button class="accessibility-reset" type="button" (click)="resetAccessibility()">Restablecer opciones</button>
         <p *ngIf="storageError" role="alert">{{ storageError }}</p>
-        <p>Las ayudas del sistema, como el lector de pantalla y la lupa, se activan desde los ajustes del dispositivo o del navegador. Una página web no puede abrirlos ni activarlos por sí sola.</p>
+        <p>El lector de pantalla y la lupa del dispositivo se activan desde sus propios ajustes.</p>
       </section>
     </aside>
     <div class="sr-only" role="status" aria-live="polite">{{ routeAnnouncement }}</div>
     <router-outlet></router-outlet>`
 })
 export class AppComponent implements OnInit {
+  @ViewChild(AccessibilitySpeechComponent) private speech?: AccessibilitySpeechComponent;
   private readonly router = inject(Router);
   private readonly title = inject(Title);
   routeAnnouncement = '';
@@ -53,6 +61,7 @@ export class AppComponent implements OnInit {
   fontScale = 100;
   highContrast = false;
   reducedMotion = false;
+  distinguishStates = false;
   storageError = '';
 
   ngOnInit(): void {
@@ -61,6 +70,7 @@ export class AppComponent implements OnInit {
       if ([100, 115, 130, 150, 175, 200].includes(savedScale)) this.fontScale = savedScale;
       this.highContrast = localStorage.getItem('chaquill-a11y-high-contrast') === 'true';
       this.reducedMotion = localStorage.getItem('chaquill-a11y-reduced-motion') === 'true';
+      this.distinguishStates = localStorage.getItem('chaquill-a11y-distinguish-states') === 'true';
     } catch (error) {
       this.reportStorageError(error);
     }
@@ -101,10 +111,18 @@ export class AppComponent implements OnInit {
     this.applyAccessibilitySettings();
   }
 
+  toggleDistinguishStates(): void {
+    this.distinguishStates = !this.distinguishStates;
+    this.saveAccessibility();
+    this.applyAccessibilitySettings();
+  }
+
   resetAccessibility(): void {
     this.fontScale = 100;
     this.highContrast = false;
     this.reducedMotion = false;
+    this.distinguishStates = false;
+    this.speech?.reset();
     this.saveAccessibility();
     this.applyAccessibilitySettings();
   }
@@ -114,6 +132,7 @@ export class AppComponent implements OnInit {
       localStorage.setItem('chaquill-a11y-font-scale', String(this.fontScale));
       localStorage.setItem('chaquill-a11y-high-contrast', String(this.highContrast));
       localStorage.setItem('chaquill-a11y-reduced-motion', String(this.reducedMotion));
+      localStorage.setItem('chaquill-a11y-distinguish-states', String(this.distinguishStates));
       this.storageError = '';
     } catch (error) {
       this.reportStorageError(error);
@@ -134,6 +153,7 @@ export class AppComponent implements OnInit {
     root.classList.toggle('a11y-text-scale-200', this.fontScale === 200);
     root.classList.toggle('a11y-high-contrast', this.highContrast);
     root.classList.toggle('a11y-reduced-motion', this.reducedMotion);
+    root.classList.toggle('a11y-distinguish-states', this.distinguishStates);
   }
 
   skipToMain(event: Event): void {

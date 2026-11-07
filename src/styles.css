@@ -27,6 +27,13 @@ html.a11y-text-scale-200 .accessibility-tools { zoom:.5; }
 html.a11y-high-contrast :is(h1,h2,h3,h4,h5,h6,p,span,label,legend,dt,dd,th,td,a,button,input,select,textarea,li,small,strong) { color:#000 !important; background-color:#fff !important; text-shadow:none !important; }
 html.a11y-high-contrast :is(button,input,select,textarea) { border:2px solid #000 !important; }
 html.a11y-high-contrast .accessibility-option[aria-pressed="true"] { outline:3px double #000; outline-offset:-6px; }
+html.a11y-reading-focus :focus-visible { text-decoration:underline 2px; text-underline-offset:3px; outline:3px solid #087ea4; outline-offset:3px; }
+html.a11y-distinguish-states a { text-decoration:underline 2px !important; text-underline-offset:3px; }
+html.a11y-distinguish-states [aria-invalid="true"] { border:3px dashed #8c1d18 !important; }
+html.a11y-distinguish-states :is(input[type="checkbox"],input[type="radio"]):checked { outline:3px solid #183b32; outline-offset:2px; }
+html.a11y-distinguish-states [aria-pressed="true"] { outline:3px double currentColor; outline-offset:-5px; }
+app-accessibility-speech { display:grid; gap:12px; }
+.accessibility-trigger { display:inline-flex; align-items:center; gap:8px; }
 .accessibility-tools { position:fixed; top:88px; right:16px; z-index:49; }
 .accessibility-trigger,.accessibility-panel button { min-height:44px; border:2px solid #183b32; border-radius:6px; background:#fff; padding:9px 13px; color:#183b32; font:inherit; font-weight:700; cursor:pointer; }
 .accessibility-panel { display:grid; gap:12px; width:min(340px,calc(100vw - 32px)); max-height:calc(100vh - 150px); overflow:auto; margin-top:8px; border:2px solid #183b32; border-radius:8px; background:#fff; padding:16px; color:#17221f; box-shadow:0 8px 30px #0003; }

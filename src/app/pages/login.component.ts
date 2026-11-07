@@ -10,11 +10,11 @@ import { AuthService } from '../auth.service';
     <img src="/assets/chaquillchaka-logo.png" alt="Chaquill Chak'a Hostal, desde 2008" width="180" height="67" style="display:block;margin:0 auto 12px;max-width:100%;height:auto"><h1 id="login-title">Acceso de recepción</h1>
     <p>Ingresa con la cuenta que te asignó el administrador.</p>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <label for="email">Correo administrativo</label><input id="email" class="control" type="email" formControlName="email" placeholder="admin@chaquillchaka.com.pe" autocomplete="username" aria-required="true" aria-describedby="email-help">
+      <label for="email">Correo administrativo</label><input id="email" class="control" type="email" formControlName="email" placeholder="admin@chaquillchaka.com.pe" autocomplete="username" aria-required="true" [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched" [attr.aria-describedby]="form.controls.email.invalid && form.controls.email.touched ? 'email-help email-error' : 'email-help'">
       <small id="email-help">Usa una cuenta @chaquillchaka.com.pe.</small>
-      <small class="error" *ngIf="form.controls.email.invalid && form.controls.email.touched">Ingresa un correo válido de @chaquillchaka.com.pe.</small>
-      <label for="password">Contraseña</label><input id="password" class="control" type="password" formControlName="password" autocomplete="current-password" aria-required="true">
-      <small class="error" *ngIf="form.controls.password.invalid && form.controls.password.touched">La contraseña debe tener al menos 8 caracteres.</small>
+      <small id="email-error" class="error" *ngIf="form.controls.email.invalid && form.controls.email.touched">Ingresa un correo válido de @chaquillchaka.com.pe.</small>
+      <label for="password">Contraseña</label><input id="password" class="control" type="password" formControlName="password" autocomplete="current-password" aria-required="true" [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched" [attr.aria-describedby]="form.controls.password.invalid && form.controls.password.touched ? 'password-error' : null">
+      <small id="password-error" class="error" *ngIf="form.controls.password.invalid && form.controls.password.touched">La contraseña debe tener al menos 8 caracteres.</small>
       <p *ngIf="error" class="error" role="alert" aria-live="assertive">{{ error }}</p><button class="button" type="submit" [disabled]="loading">{{ loading ? 'Ingresando…' : 'Ingresar' }}</button>
     </form>
   </section></main>`,

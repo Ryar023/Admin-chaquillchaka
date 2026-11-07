@@ -28,7 +28,7 @@ import { filter, skip } from 'rxjs';
           <span id="text-size-label">Ampliación de página: {{ fontScale }}%</span>
           <div class="text-size-buttons" role="group" aria-labelledby="text-size-label">
             <button type="button" aria-label="Disminuir ampliación" [disabled]="fontScale <= 100" (click)="changeFontScale(-1)">A−</button>
-            <button type="button" aria-label="Aumentar ampliación" [disabled]="fontScale >= 130" (click)="changeFontScale(1)">A+</button>
+            <button type="button" aria-label="Aumentar ampliación" [disabled]="fontScale >= 200" (click)="changeFontScale(1)">A+</button>
           </div>
         </div>
         <button class="accessibility-option" type="button" [attr.aria-pressed]="highContrast" (click)="toggleHighContrast()">
@@ -58,7 +58,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     try {
       const savedScale = Number(localStorage.getItem('chaquill-a11y-font-scale'));
-      if ([100, 115, 130].includes(savedScale)) this.fontScale = savedScale;
+      if ([100, 115, 130, 150, 175, 200].includes(savedScale)) this.fontScale = savedScale;
       this.highContrast = localStorage.getItem('chaquill-a11y-high-contrast') === 'true';
       this.reducedMotion = localStorage.getItem('chaquill-a11y-reduced-motion') === 'true';
     } catch (error) {
@@ -82,7 +82,7 @@ export class AppComponent implements OnInit {
   }
 
   changeFontScale(direction: -1 | 1): void {
-    const scales = [100, 115, 130];
+    const scales = [100, 115, 130, 150, 175, 200];
     const currentIndex = scales.indexOf(this.fontScale);
     this.fontScale = scales[Math.max(0, Math.min(scales.length - 1, currentIndex + direction))];
     this.saveAccessibility();
@@ -129,6 +129,9 @@ export class AppComponent implements OnInit {
     const root = document.documentElement;
     root.classList.toggle('a11y-text-scale-115', this.fontScale === 115);
     root.classList.toggle('a11y-text-scale-130', this.fontScale === 130);
+    root.classList.toggle('a11y-text-scale-150', this.fontScale === 150);
+    root.classList.toggle('a11y-text-scale-175', this.fontScale === 175);
+    root.classList.toggle('a11y-text-scale-200', this.fontScale === 200);
     root.classList.toggle('a11y-high-contrast', this.highContrast);
     root.classList.toggle('a11y-reduced-motion', this.reducedMotion);
   }

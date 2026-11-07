@@ -32,6 +32,8 @@ html.a11y-high-contrast :is(button,input,select,textarea) { border:2px solid var
 html.a11y-high-contrast .accessibility-panel { background:var(--a11y-dark) !important; color:var(--a11y-light) !important; border-color:var(--a11y-light) !important; }
 html.a11y-high-contrast .accessibility-option[aria-pressed="true"] { outline:3px double var(--a11y-accent); outline-offset:-6px; }
 html.a11y-reading-focus :focus-visible { text-decoration:underline 2px; text-underline-offset:3px; outline:3px solid #087ea4; outline-offset:3px; }
+html.a11y-reading-focus .a11y-reading-label, html.a11y-reading-focus .a11y-reading-label > span { text-decoration:underline 3px solid #087ea4; text-underline-offset:4px; }
+::highlight(a11y-reading-selection) { background-color:#ffeb3b; color:#121212; text-decoration:underline 2px #121212; }
 html.a11y-distinguish-states a { text-decoration:underline 2px !important; text-underline-offset:3px; }
 html.a11y-distinguish-states [aria-invalid="true"] { border:3px dashed #8c1d18 !important; }
 html.a11y-distinguish-states :is(input[type="checkbox"],input[type="radio"]):checked { outline:3px solid #183b32; outline-offset:2px; }

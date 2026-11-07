@@ -18,11 +18,11 @@ import { AccessibilitySpeechComponent } from './accessibility-speech.component';
         #accessibilityTrigger
         class="accessibility-trigger"
         type="button"
+        aria-label="Accesibilidad"
         aria-controls="accessibility-panel"
         [attr.aria-expanded]="accessibilityOpen"
         (click)="accessibilityOpen = !accessibilityOpen">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"></circle><path d="M4 8l8 2 8-2M12 10v5m-4 6 4-6 4 6"></path></svg>
-        <span>Accesibilidad</span>
       </button>
       <section [hidden]="!accessibilityOpen" id="accessibility-panel" class="accessibility-panel" aria-labelledby="accessibility-title">
         <h2 id="accessibility-title">Opciones de accesibilidad</h2>
@@ -41,6 +41,15 @@ import { AccessibilitySpeechComponent } from './accessibility-speech.component';
         </button>
         <button class="accessibility-option" type="button" [attr.aria-pressed]="distinguishStates" (click)="toggleDistinguishStates()">
           Distinguir enlaces y estados: {{ distinguishStates ? 'activado' : 'desactivado' }}
+        </button>
+        <button class="accessibility-option" type="button" [attr.aria-pressed]="highlightLinks" (click)="toggleHighlightLinks()">
+          Resaltar enlaces: {{ highlightLinks ? 'activado' : 'desactivado' }}
+        </button>
+        <button class="accessibility-option" type="button" [attr.aria-pressed]="textSpacing" (click)="toggleTextSpacing()">
+          Espaciado de texto: {{ textSpacing ? 'activado' : 'desactivado' }}
+        </button>
+        <button class="accessibility-option" type="button" [attr.aria-pressed]="accessibleFont" (click)="toggleAccessibleFont()">
+          Fuente sans-serif: {{ accessibleFont ? 'activada' : 'desactivada' }}
         </button>
         <p>Ayuda a distinguir enlaces y estados sin depender solo del color; puede ser útil para personas con daltonismo.</p>
         <app-accessibility-speech></app-accessibility-speech>
@@ -62,6 +71,9 @@ export class AppComponent implements OnInit {
   highContrast = false;
   reducedMotion = false;
   distinguishStates = false;
+  highlightLinks = false;
+  textSpacing = false;
+  accessibleFont = false;
   storageError = '';
 
   ngOnInit(): void {
@@ -71,6 +83,9 @@ export class AppComponent implements OnInit {
       this.highContrast = localStorage.getItem('chaquill-a11y-high-contrast') === 'true';
       this.reducedMotion = localStorage.getItem('chaquill-a11y-reduced-motion') === 'true';
       this.distinguishStates = localStorage.getItem('chaquill-a11y-distinguish-states') === 'true';
+      this.highlightLinks = localStorage.getItem('chaquill-a11y-highlight-links') === 'true';
+      this.textSpacing = localStorage.getItem('chaquill-a11y-text-spacing') === 'true';
+      this.accessibleFont = localStorage.getItem('chaquill-a11y-accessible-font') === 'true';
     } catch (error) {
       this.reportStorageError(error);
     }
@@ -117,11 +132,32 @@ export class AppComponent implements OnInit {
     this.applyAccessibilitySettings();
   }
 
+  toggleHighlightLinks(): void {
+    this.highlightLinks = !this.highlightLinks;
+    this.saveAccessibility();
+    this.applyAccessibilitySettings();
+  }
+
+  toggleTextSpacing(): void {
+    this.textSpacing = !this.textSpacing;
+    this.saveAccessibility();
+    this.applyAccessibilitySettings();
+  }
+
+  toggleAccessibleFont(): void {
+    this.accessibleFont = !this.accessibleFont;
+    this.saveAccessibility();
+    this.applyAccessibilitySettings();
+  }
+
   resetAccessibility(): void {
     this.fontScale = 100;
     this.highContrast = false;
     this.reducedMotion = false;
     this.distinguishStates = false;
+    this.highlightLinks = false;
+    this.textSpacing = false;
+    this.accessibleFont = false;
     this.speech?.reset();
     this.saveAccessibility();
     this.applyAccessibilitySettings();
@@ -133,6 +169,9 @@ export class AppComponent implements OnInit {
       localStorage.setItem('chaquill-a11y-high-contrast', String(this.highContrast));
       localStorage.setItem('chaquill-a11y-reduced-motion', String(this.reducedMotion));
       localStorage.setItem('chaquill-a11y-distinguish-states', String(this.distinguishStates));
+      localStorage.setItem('chaquill-a11y-highlight-links', String(this.highlightLinks));
+      localStorage.setItem('chaquill-a11y-text-spacing', String(this.textSpacing));
+      localStorage.setItem('chaquill-a11y-accessible-font', String(this.accessibleFont));
       this.storageError = '';
     } catch (error) {
       this.reportStorageError(error);
@@ -154,6 +193,9 @@ export class AppComponent implements OnInit {
     root.classList.toggle('a11y-high-contrast', this.highContrast);
     root.classList.toggle('a11y-reduced-motion', this.reducedMotion);
     root.classList.toggle('a11y-distinguish-states', this.distinguishStates);
+    document.body.classList.toggle('a11y-highlight-links', this.highlightLinks);
+    document.body.classList.toggle('a11y-text-spacing', this.textSpacing);
+    document.body.classList.toggle('a11y-accessible-font', this.accessibleFont);
   }
 
   skipToMain(event: Event): void {

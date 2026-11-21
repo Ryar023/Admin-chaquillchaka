@@ -13,7 +13,7 @@ const ROLE_LABELS: Record<string, string> = { ADMIN: 'Administrador', RECEPTION:
     <header class="topbar">
       <div class="shell topbar-inner">
         <a routerLink="/dashboard" class="brand" aria-label="Chaquill Chak'a, panel interno">
-          <img src="/assets/chaquillchaka-logo.png" alt="Chaquill Chak'a Hostal, desde 2008" width="150" height="56">
+          <img src="/assets/logo-principal.png" alt="Chaquill Chak'a Hostal, desde 2008" width="150" height="56">
         </a>
         <nav aria-label="Secciones del panel" class="sections">
           <a *ngIf="auth.hasRole(['ADMIN','RECEPTION','ACCOUNTING'])" routerLink="/dashboard" routerLinkActive="active" ariaCurrentWhenActive="page" class="nav-btn">Reservas</a>
